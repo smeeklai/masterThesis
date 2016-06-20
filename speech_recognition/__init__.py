@@ -214,17 +214,6 @@ class Recognizer(AudioSource):
         self.non_speaking_duration = 0.5 # seconds of non-speaking audio to keep on both sides of the recording
         self.output_sentence = ""
         self.time_of_last_response = 0
-        # self.result = []
-        # self.response_lines = []
-        # self.upstream_url = "https://www.google.com/speech-api/full-duplex/v1/up?key=%(key)s&pair=%(pair)s&lang=en-US&client=chromium&continuous&interim&pFilter=0"
-        # self.upstream_headers = {}
-        # self.downstream_url = "https://www.google.com/speech-api/full-duplex/v1/down?pair=%(pair)s"
-        # self.api_key = "ENTER YOUR API KEY HERE"
-        # self.timeSinceResponse = 0
-        # self.response = ""
-        # self.connectionSuccessful = False
-        # self.no_result = False
-        # self.flac_data = ''
 
     def record(self, source, duration = None, offset = None):
         """
@@ -257,17 +246,6 @@ class Recognizer(AudioSource):
         frame_data = frames.getvalue()
         frames.close()
         return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-        # audio_result = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-        # try:
-        #     # for testing purposes, we're just using the default API key
-        #     # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
-        #     # instead of `r.recognize_google(audio)`
-        #     print(self.recognize_google(audio_result))
-        #     # print recognizer.recognize_google(audio, None, "en-US", True)
-        # except UnknownValueError:
-        #     print("Google Speech Recognition could not understand audio")
-        # except RequestError as e:
-        #     print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
 
     def adjust_for_ambient_noise(self, source, duration = 1):
@@ -295,27 +273,6 @@ class Recognizer(AudioSource):
             damping = self.dynamic_energy_adjustment_damping ** seconds_per_buffer # account for different chunk sizes and rates
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
-
-    def test(self, frames, s1, s2):
-        # start = timeit.default_timer()
-        frame_data = b"".join(list(frames))
-        audio_result = AudioData(frame_data, s1, s2)
-        # stop = timeit.default_timer()
-        # print "Get audio result Time %f" % (stop - start)
-        try:
-            # for testing purposes, we're just using the default API key
-            # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
-            # instead of `r.recognize_google(audio)`
-            start = timeit.default_timer()
-            result = self.recognize_google(audio_result)
-            stop = timeit.default_timer()
-            print (result)
-            print "Response Time: %f" % (stop - start)
-            # print recognizer.recognize_google(audio, None, "en-US", True)
-        except UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-        except RequestError as e:
-            print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
     def replace_output_sentence(self, sentence):
         self.output_sentence = sentence
@@ -354,20 +311,11 @@ class Recognizer(AudioSource):
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0 # number of seconds of audio read
         while True:
-            # frames = collections.deque()
-            # elapsed_time += seconds_per_buffer
-            # buffer = source.stream.read(source.CHUNK)
-            # if len(buffer) == 0: break # reached end of the stream
-            # frames.append(buffer)
-            # energy = audioop.rms(buffer, source.SAMPLE_WIDTH)
-            # print "Energy: %s energy_threshold: %s buffer: %d frames: %s" % (str(energy), str(self.energy_threshold), len(buffer), str(len(frames)))
-
             frames = collections.deque()
             frames2 = collections.deque()
             # store audio input until the phrase starts
             while True:
                 elapsed_time += seconds_per_buffer
-                # print "elapsed_time: %s seconds_per_buffer %s" % (str(elapsed_time), str(seconds_per_buffer))
                 if timeout and elapsed_time > timeout: # handle timeout if specified
                     raise WaitTimeoutError("listening timed out")
 
@@ -393,8 +341,6 @@ class Recognizer(AudioSource):
             while True:
                 elapsed_time += seconds_per_buffer
                 if (start_time == 0): start_time = elapsed_time
-                # print "start time: %s" % (str(start_time))
-                # print "elapsed_time: %s" % (str(elapsed_time))
                 buffer = source.stream.read(source.CHUNK)
                 if len(buffer) == 0: break # reached end of the stream
                 frames.append(buffer)
@@ -406,26 +352,20 @@ class Recognizer(AudioSource):
                 energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
                 if energy > self.energy_threshold:
                     diff = elapsed_time - start_time
-                    # print "Diff %s" % (str(diff))
                     if diff >= duration_t:
-                        # print "Reset start time"
                         start_time = 0
                         diff = 0
                         frame_data = b"".join(list(frames2))
                         partial_audioData = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-                        # testThread = Thread(target=self.continuously_recognize_google, args=(partial_audioData,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False,))
                         testThread = self.myThread(partial_audioData,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
                         testThread.start()
                         threads.append(testThread)
-                        # self.continuously_recognize_google(partial_audioData, key = "AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ", language = "en-US", show_all = False)
                         # frames2 = collections.deque()
                     pause_count = 0
                 else:
                     pause_count += 1
                 if pause_count > pause_buffer_count: # end of the phrase
                     break
-                # print "Energy: %s energy_threshold: %s pause_count: %s pause_buffer_count %s" % (str(energy), str(self.energy_threshold),
-                # str(pause_count), str(pause_buffer_count))
             # check how long the detected phrase is, and retry listening if the phrase is too short
             phrase_count -= pause_count
             if phrase_count >= phrase_buffer_count: break # phrase is long enough, stop listening
@@ -440,8 +380,6 @@ class Recognizer(AudioSource):
         finalThread = self.myThread(full_data,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
         finalThread.setName("finalThread")
         finalThread.start()
-        # return self.continuously_recognize_google(full_data, key = "AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ", language = "en-US", show_all = False)
-        # return AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
 
         # # obtain frame data
         # start = timeit.default_timer()
@@ -599,49 +537,6 @@ class Recognizer(AudioSource):
             if item:
                 yield item
             return
-            # i = 0
-            # while True:
-            #     print "i: " + str(i)
-            #     print "Time: " + str(self.timeSinceResponse)
-            #     if i < 1:
-            #         print ("%d bytes sent" % len(item))
-            #         yield item
-            #     else:
-            #         if self.no_result or self.timeSinceResponse > 2:
-            #             # self.result.append(self.response)
-            #             return #Google is Done Responding, close UpStream
-            #         time.sleep(.5)
-            #         self.timeSinceResponse += .5
-            #         yield "00000000"
-            #     i += 1
-
-            # frames = collections.deque()
-            # i = 0
-            # while True:
-            #     buffer = source.stream.read(source.CHUNK)
-            #     if len(buffer) == 0: break # reached end of the stream
-            #     frames.append(buffer)
-            #     energy = audioop.rms(buffer, source.SAMPLE_WIDTH)
-            #     print i
-            #     if i > 30:
-            #         print self.timeSinceResponse
-            #         if self.no_result or self.timeSinceResponse > 2:
-            #             #Google is Done Responding, close UpStream
-            #             return
-            #         time.sleep(.5)
-            #         self.timeSinceResponse += .5
-            #         # yield item
-            #     elif i % 5 == 0:
-            #         frame_data = b"".join(list(frames))
-            #         audio_data = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-            #         item, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
-            #         # item = self.flac_data
-            #         # yield "00000000"
-            #         # print ("%d bytes sent" % len(item))
-            #         # self.timeSinceResponse += 1
-            #         yield item
-            #     i += 1
-            # frames = collections.deque()
 
         def final(self):
             try:
@@ -727,50 +622,6 @@ class Recognizer(AudioSource):
                 self.downstream_thread.start()
                 self.upstream_thread.start()
                 self.stop()
-
-            # def continuously_recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
-            #     assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
-            #     assert key is None or isinstance(key, str), "`key` must be `None` or a string"
-            #     assert isinstance(language, str), "`language` must be a string"
-            #
-            #     self.flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
-            #     self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)}
-            #     if key is None:
-            #         self.api_key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-            #     else:
-            #         self.api_key = key
-            #     self.start()
-            #     return self.result
-
-
-    # def continuously_recognize_google(self, key = None, language = "en-US", show_all = False):
-    #     assert key is None or isinstance(key, str), "`key` must be `None` or a string"
-    #     assert isinstance(language, str), "`language` must be a string"
-    #
-    #     # self.flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
-    #     self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(16000)}
-    #     if key is None:
-    #         self.api_key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-    #     else:
-    #         self.api_key = key
-    #     self.start()
-    #     print self.result
-    #     self.start()
-    #     return self.result
-
-    # def continuously_recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
-    #     assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
-    #     assert key is None or isinstance(key, str), "`key` must be `None` or a string"
-    #     assert isinstance(language, str), "`language` must be a string"
-    #
-    #     self.flac_data, sample_rate = audio_data.get_flac_data(), audio_data.sample_rate
-    #     self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(sample_rate)}
-    #     if key is None:
-    #         self.api_key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
-    #     else:
-    #         self.api_key = key
-    #     self.start()
-    #     return self.result
 
     def recognize_google(self, audio_data, key = None, language = "en-US", show_all = False):
         """

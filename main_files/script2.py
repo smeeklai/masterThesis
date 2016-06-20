@@ -26,11 +26,9 @@ def noalsaerr():
 with noalsaerr():
     r = sr.Recognizer()
     try:
-        # result = r.continuously_recognize_google(key = "AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ")
         with sr.Microphone() as source:
             print("Say something!")
             result = r.listenMo(source)
-        # print result
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:

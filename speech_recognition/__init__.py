@@ -285,10 +285,13 @@ class Recognizer(AudioSource):
                 self.replace_output_sentence(response)
                 self.time_of_last_response = time_of_responses
             elif len(response) > output_sentence_length:
-                self.replace_output_sentence(response)
-                self.time_of_last_response = time_of_responses
+                if response != self.output_sentence:
+                    self.replace_output_sentence(response)
+                    self.time_of_last_response = time_of_responses
             elif len(response) == output_sentence_length and time_of_responses > self.time_of_last_response:
-
+                if response != self.output_sentence:
+                    self.replace_output_sentence(response)
+                    self.time_of_last_response = time_of_responses
 
     def listenMo(self, source, timeout = None):
         """
@@ -343,7 +346,9 @@ class Recognizer(AudioSource):
                 if (start_time == 0): start_time = elapsed_time
                 buffer = source.stream.read(source.CHUNK)
                 if len(buffer) == 0: break # reached end of the stream
+                #Main frame uses to store complated voice data
                 frames.append(buffer)
+                #Sub frame uses to store partial voice data (every 1 sec)
                 frames2.append(buffer)
 
                 phrase_count += 1
@@ -357,6 +362,7 @@ class Recognizer(AudioSource):
                         diff = 0
                         frame_data = b"".join(list(frames2))
                         partial_audioData = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
+                        #Create a request to google
                         testThread = self.myThread(partial_audioData,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
                         testThread.start()
                         threads.append(testThread)
@@ -370,10 +376,11 @@ class Recognizer(AudioSource):
             phrase_count -= pause_count
             if phrase_count >= phrase_buffer_count: break # phrase is long enough, stop listening
 
-        # obtain frame data
+        # Waiting for all sub threads to be finished
         for t in threads:
             t.join()
 
+        #Sending a request with complated voice data
         for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
         frame_data = b"".join(list(frames))
         full_data = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
@@ -522,9 +529,9 @@ class Recognizer(AudioSource):
             self.show_all = show_all
             self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(self.sample_rate)}
         def run(self):
-            print "Starting " + self.name
+            # print "Starting " + self.name
             self.start2()
-            print "Exiting " + self.name
+            # print "Exiting " + self.name
             self.parent.handle_google_result(self.name, self.result, timeit.default_timer())
             # if self.name == "finalThread":
             #     print "Final result: " + str(self.result)
@@ -535,6 +542,7 @@ class Recognizer(AudioSource):
         def gen_data(self):
             item = self.flac_data
             if item:
+                #Sending the whole FLAC data
                 yield item
             return
 
@@ -602,9 +610,10 @@ class Recognizer(AudioSource):
                 # print ("request downstream content response is: %s" % self.response_lines)
             else:
                 # print ("Failed to connect downstream. Response is: %s \n %s" %(r.status_code, r.content))
-                print ("Failed to connect downstream")
-                print ("Restarting Attempt")
-                # self.start2()
+                # print ("Failed to connect downstream")
+                if self.name == "finalThread":
+                    print ("Restarting Attempt")
+                    self.start2()
 
         def stop(self):
             self.downstream_thread.join()

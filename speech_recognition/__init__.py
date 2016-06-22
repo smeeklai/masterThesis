@@ -214,6 +214,7 @@ class Recognizer(AudioSource):
         self.non_speaking_duration = 0.5 # seconds of non-speaking audio to keep on both sides of the recording
         self.output_sentence = ""
         self.time_of_last_response = 0
+        self.finalThreadStarted = 0
 
     def record(self, source, duration = None, offset = None):
         """
@@ -293,6 +294,12 @@ class Recognizer(AudioSource):
                     self.replace_output_sentence(response)
                     self.time_of_last_response = time_of_responses
 
+    def get_output_sentence(self):
+        return self.output_sentence
+
+    def set_output_sentence(self, new_output_sentence):
+        self.output_sentence = new_output_sentence
+
     def listenMo(self, source, timeout = None):
         """
         Records a single phrase from ``source`` (an ``AudioSource`` instance) into an ``AudioData`` instance, which it returns.
@@ -309,7 +316,7 @@ class Recognizer(AudioSource):
         phrase_buffer_count = int(math.ceil(self.phrase_threshold / seconds_per_buffer)) # minimum number of buffers of speaking audio before we consider the speaking audio a phrase
         non_speaking_buffer_count = int(math.ceil(self.non_speaking_duration / seconds_per_buffer)) # maximum number of buffers of non-speaking audio to retain before and after
         threads = []
-        duration_t = 1
+        duration_t = 2
         start_time = 0
         # read audio input for phrases until there is a phrase that is long enough
         elapsed_time = 0 # number of seconds of audio read
@@ -363,7 +370,8 @@ class Recognizer(AudioSource):
                         frame_data = b"".join(list(frames2))
                         partial_audioData = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
                         #Create a request to google
-                        testThread = self.myThread(partial_audioData,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
+                        # testThread = self.myThread(partial_audioData,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
+                        testThread = self.myThread(partial_audioData,None,"en-US",False, self)
                         testThread.start()
                         threads.append(testThread)
                         # frames2 = collections.deque()
@@ -376,17 +384,20 @@ class Recognizer(AudioSource):
             phrase_count -= pause_count
             if phrase_count >= phrase_buffer_count: break # phrase is long enough, stop listening
 
-        # Waiting for all sub threads to be finished
-        for t in threads:
-            t.join()
-
         #Sending a request with complated voice data
         for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
         frame_data = b"".join(list(frames))
         full_data = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-        finalThread = self.myThread(full_data,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
+        # finalThread = self.myThread(full_data,"AIzaSyC1GY4NPun44trK7g7V-TNmp642aIugTCQ","en-US",False, self)
+        finalThread = self.myThread(full_data,None,"en-US",False, self)
         finalThread.setName("finalThread")
         finalThread.start()
+
+        self.finalThreadStarted = 1
+
+        # Waiting for all sub threads to be finished
+        for t in threads:
+            t.join()
 
         # # obtain frame data
         # start = timeit.default_timer()
@@ -512,7 +523,7 @@ class Recognizer(AudioSource):
             self.parent = parent
             self.result = []
             self.response_lines = []
-            self.upstream_url = "https://www.google.com/speech-api/full-duplex/v1/up?key=%(key)s&pair=%(pair)s&lang=en-US&client=chromium&continuous&interim&pFilter=0"
+            self.upstream_url = "https://www.google.com/speech-api/full-duplex/v1/up?key=%(key)s&pair=%(pair)s&lang=en-US&client=chromium&continuous=true&interim=true&pFilter=0"
             self.downstream_url = "https://www.google.com/speech-api/full-duplex/v1/down?pair=%(pair)s"
             if key is None:
                 self.api_key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
@@ -528,11 +539,12 @@ class Recognizer(AudioSource):
             self.language = language
             self.show_all = show_all
             self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(self.sample_rate)}
+
         def run(self):
             # print "Starting " + self.name
             self.start2()
             # print "Exiting " + self.name
-            self.parent.handle_google_result(self.name, self.result, timeit.default_timer())
+            # self.parent.handle_google_result(self.name, self.result, timeit.default_timer())
             # if self.name == "finalThread":
             #     print "Final result: " + str(self.result)
 
@@ -540,11 +552,28 @@ class Recognizer(AudioSource):
             return hex(random.getrandbits(64))[2:-1]
 
         def gen_data(self):
-            item = self.flac_data
-            if item:
-                #Sending the whole FLAC data
-                yield item
-            return
+            counter = 0;
+            while True:
+                item = self.flac_data
+                info = [item[i:i+8192] for i in range(0, len(item), 8192)]
+                # if item:
+                #     print("%d bytes sent" % len(info[0]))
+                #     #Sending the whole FLAC data
+                #     yield item
+                # return
+                if counter < len(info):
+                    # print("%d bytes sent" % len(info[counter]))
+                    yield info[counter]
+                else:
+                    if self.no_result or self.timeSinceResponse > 2:
+                        # self.result.append(self.response)
+                        # print "finished"
+                        return #Google is Done Responding, close UpStream
+                    # print "test"
+                    time.sleep(.5)
+                    self.timeSinceResponse += .5
+                    yield "00000000"
+                counter += 1
 
         def final(self):
             try:
@@ -569,47 +598,58 @@ class Recognizer(AudioSource):
             # print ("request upstream content submission response is: %s" % str(upstream_request_content))
 
         def downstream(self, url):
-            r = self.downsession.get(url, stream=False)
+            r = self.downsession.get(url, stream=True)
             self.status_code = r.status_code
             if r.status_code == 200:
                 for line in r.iter_lines():
-                    self.timeSinceResponse = 0
-                    self.response = line
-                    if line == '{"result":[]}':
-                        # Google sends back an empty result signifying a successful connection
-                        if not self.connectionSuccessful:
-                            self.connectionSuccessful = True
-                        else: # another empty response means Google couldn't find anything in the audio ...
-                            # Make the result pretty / match normal results
-                            print ("No Recongnizable Dialogue, closing stream")
-                            self.result.append('{"result":[{"alternative":[{"transcript":"","confidence":0.99999}],"final":true}],"result_index":0}')
-                            self.no_result = True
-                    if self.final():
-                        # self.result.append(line)
-                        if self.name == "finalThread":
-                            t = json.loads(line)
-                            transcript = t['result'][0]['alternative'][0]['transcript']
-                            self.result.append(transcript)
-                            # print "final result: " + t['result'][0]['alternative'][0]['transcript']
-                        # self.response = ""
+                    if not self.parent.finalThreadStarted or self.name == "finalThread":
+                        self.timeSinceResponse = 0
+                        self.response = line
+                        if line == '{"result":[]}':
+                            # print "Connection successful"
+                            # Google sends back an empty result signifying a successful connection
+                            if not self.connectionSuccessful:
+                                self.connectionSuccessful = True
+                            else: # another empty response means Google couldn't find anything in the audio ...
+                                # Make the result pretty / match normal results
+                                print ("No Recongnizable Dialogue, closing stream")
+                                self.result.append('{"result":[{"alternative":[{"transcript":"","confidence":0.99999}],"final":true}],"result_index":0}')
+                                self.no_result = True
+                        if self.final():
+                            # self.result.append(line)
+                            if self.name == "finalThread":
+                                t = json.loads(line)
+                                transcript = t['result'][0]['alternative'][0]['transcript']
+                                # self.result.append(transcript)
+                                # while not self.parent.exitFlag:
+                                #     pass
+                                self.parent.set_output_sentence(transcript)
+                                print "Final result: " + self.parent.get_output_sentence()
+                                # print "final result: " + t['result'][0]['alternative'][0]['transcript']
+                            self.response = ""
+                        else:
+                            # print self.name + ": " + line
+                            # if self.name != "finalThread":
+                                response = json.loads(line)
+                                transcript = ""
+                                try:
+                                    if len(response['result']) != 0 :
+                                        transcript = response['result'][0]['alternative'][0]['transcript']
+                                except:
+                                    transcript = response['result']
+                                finally:
+                                    # self.result.append(transcript)
+                                    if len(transcript) > len(self.parent.get_output_sentence()):
+                                        self.parent.set_output_sentence(transcript)
+                                        print self.name + ": " + self.parent.get_output_sentence()
+                                # print "Interim result of thread %s: %s" % (self.name, transcript)
+                            # print a['result']
+                            # print self.response
                     else:
-                        # print "Interim result: " + self.response
-                        if self.name != "finalThread":
-                            a = json.loads(self.response)
-                            transcript = ""
-                            try:
-                                if len(a['result']) != 0 :
-                                    transcript = a['result'][0]['alternative'][0]['transcript']
-                            except:
-                                transcript = a['result']
-                            finally:
-                                self.result.append(transcript)
-                            # print "Interim result of thread %s: %s" % (self.name, transcript)
-                        # print a['result']
-                        # print self.response
-                # print ("request downstream content response is: %s" % self.response_lines)
+                        break;
+                    # print ("request downstream content response is: %s" % self.response_lines)
             else:
-                # print ("Failed to connect downstream. Response is: %s \n %s" %(r.status_code, r.content))
+                print ("Failed to connect downstream. Response is: %s \n %s" %(r.status_code, r.content))
                 # print ("Failed to connect downstream")
                 if self.name == "finalThread":
                     print ("Restarting Attempt")

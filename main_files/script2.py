@@ -28,7 +28,7 @@ with noalsaerr():
     try:
         with sr.Microphone() as source:
             print("Say something!")
-            result = r.listenMo(source)
+            r.listenMo(source)
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:

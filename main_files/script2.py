@@ -24,10 +24,16 @@ def noalsaerr():
 
 # obtain audio from the microphone
 with noalsaerr():
+    m = sr.Microphone()
     r = sr.Recognizer()
+    r.dynamic_energy_ratio = 3
+    # r.energy_threshold = 900
+    with m as source:
+        print("Setting ambient noise...")
+        r.adjust_for_ambient_noise(source)
+
     try:
         with sr.Microphone() as source:
-            print("Say something!")
             r.listenMo(source)
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")

@@ -8,11 +8,12 @@ import wave
 THRESHOLD = 500
 CHUNK_SIZE = 1024
 FORMAT = pyaudio.paInt16
+print FORMAT
 RATE = 44100
 
 def is_silent(snd_data):
     "Returns 'True' if below the 'silent' threshold"
-    print "snd_data: %d" % max(snd_data)
+    # print "snd_data: %d" % max(snd_data)
     return max(snd_data) < THRESHOLD
 
 def normalize(snd_data):
@@ -78,7 +79,7 @@ def record():
 
     while 1:
         # little endian, signed short
-        print "num_silent: %d snd_started: %r" % (num_silent, snd_started)
+        # print "num_silent: %d snd_started: %r" % (num_silent, snd_started)
         snd_data = array('h', stream.read(CHUNK_SIZE))
         if byteorder == 'big':
             snd_data.byteswap()

@@ -26,21 +26,21 @@ Library Reference
 
 The `library reference <https://github.com/smeeklai/masterThesis/blob/master/reference/library-reference.rst>`__ documents every publicly accessible object in the library. This document is also included under ``reference/library-reference.rst``.
 
-See `modified library reference <https://github.com/Uberi/speech_recognition/blob/master/reference/modified-library-reference.rst>`__ document for every new and modified classes and objects in the library.
+See `modified library reference <https://github.com/smeeklai/masterThesis/blob/master/reference/modified-library-reference.rst>`__ document for every new and modified classes and objects in the library.
 
 See `Notes on using PocketSphinx <https://github.com/smeeklai/masterThesis/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
 
 Examples
 --------
 
-See the ``examples/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/examples>`__ in the repository root for usage examples **of original version of the library**:
+See the ``examples/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/examples>`__ in the repository root for usage examples **of original version of the library**:
 
--  `Recognize speech input from the microphone <https://github.com/Uberi/speech_recognition/blob/master/examples/microphone_recognition.py>`__
--  `Transcribe an audio file <https://github.com/Uberi/speech_recognition/blob/master/examples/audio_transcribe.py>`__
--  `Save audio data to an audio file <https://github.com/Uberi/speech_recognition/blob/master/examples/write_audio.py>`__
--  `Show extended recognition results <https://github.com/Uberi/speech_recognition/blob/master/examples/extended_results.py>`__
--  `Calibrate the recognizer energy threshold for ambient noise levels <https://github.com/Uberi/speech_recognition/blob/master/examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
--  `Listening to a microphone in the background <https://github.com/Uberi/speech_recognition/blob/master/examples/background_listening.py>`__
+-  `Recognize speech input from the microphone <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/examples/microphone_recognition.py>`__
+-  `Transcribe an audio file <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/examples/audio_transcribe.py>`__
+-  `Save audio data to an audio file <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/examples/write_audio.py>`__
+-  `Show extended recognition results <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/examples/extended_results.py>`__
+-  `Calibrate the recognizer energy threshold for ambient noise levels <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/examples/calibrate_energy_threshold.py>`__ (see ``recognizer_instance.energy_threshold`` for details)
+-  `Listening to a microphone in the background <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/examples/background_listening.py>`__
 
 Installing
 ----------
@@ -70,7 +70,7 @@ To use all of the functionality of the library, you should have:
 The following requirements are optional, but can improve or extend functionality in some situations:
 
 * On Python 2, and only on Python 2, some functions (like ``recognizer_instance.recognize_bing``) will run slower if you do not have **Monotonic for Python 2** installed.
-* If using CMU Sphinx, you may want to `install additional language packs <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst#installing-other-languages>`__ to support languages like International French or Mandarin Chinese.
+* If using CMU Sphinx, you may want to `install additional language packs <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/reference/pocketsphinx.rst#installing-other-languages>`__ to support languages like International French or Mandarin Chinese.
 
 The following sections go over the details of each requirement.
 
@@ -94,20 +94,20 @@ The installation instructions are quite good as of PyAudio v0.2.9. For convenien
 * On OS X, install PortAudio using `Homebrew <http://brew.sh/>`__: ``brew install portaudio && sudo brew link portaudio``. Then, install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio``.
 * On other POSIX-based systems, install the ``portaudio19-dev`` and ``python-all-dev`` (or ``python3-all-dev`` if using Python 3) packages (or their closest equivalents) using a package manager of your choice, and then install PyAudio using `Pip <https://pip.readthedocs.org/>`__: ``pip install pyaudio`` (replace ``pip`` with ``pip3`` if using Python 3).
 
-PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__ in the repository root. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the repository `root directory <https://github.com/Uberi/speech_recognition>`__.
+PyAudio `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows and Linux are included for convenience, under the ``third-party/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/third-party>`__ in the repository root. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the repository `root directory <https://github.com/smeeklai/masterThesis/speech_recognition>`__.
 
 PocketSphinx-Python (for Sphinx users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `PocketSphinx-Python <https://github.com/bambocher/pocketsphinx-python>`__ is **required if and only if you want to use the Sphinx recognizer** (``recognizer_instance.recognize_sphinx``).
 
-PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows are included for convenience, under the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
+PocketSphinx-Python `wheel packages <https://pypi.python.org/pypi/wheel>`__ for 64-bit Python 2.7, 3.4, and 3.5 on Windows are included for convenience, under the ``third-party/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/third-party>`__. To install, simply run ``pip install wheel`` followed by ``pip install ./third-party/WHEEL_FILENAME`` (replace ``pip`` with ``pip3`` if using Python 3) in the SpeechRecognition folder.
 
-On Linux and other POSIX systems (such as OS X), follow the instructions under "Building PocketSphinx-Python from source" in `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for installation instructions.
+On Linux and other POSIX systems (such as OS X), follow the instructions under "Building PocketSphinx-Python from source" in `Notes on using PocketSphinx <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for installation instructions.
 
 Note that the versions available in most package repositories are outdated and will not work with the bundled language data. Using the bundled wheel packages or building from source is recommended.
 
-See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
+See `Notes on using PocketSphinx <https://github.com/smeeklai/masterThesis/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
 
 FLAC (for some systems)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -236,12 +236,12 @@ Developing
 To hack on this library, first make sure you have all the requirements listed in the "Requirements" section.
 
 -  Most of the library code lives in ``speech_recognition/__init__.py``.
--  Examples live under the ``examples/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/examples>`__, and the demo script lives in ``speech_recognition/__main__.py``.
--  The FLAC encoder binaries are in the ``speech_recognition/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/speech_recognition>`__.
--  Documentation can be found in the ``reference/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/reference>`__.
--  Third-party libraries, utilities, and reference material are in the ``third-party/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/third-party>`__.
+-  Examples live under the ``examples/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/examples>`__, and the demo script lives in ``speech_recognition/__main__.py``.
+-  The FLAC encoder binaries are in the ``speech_recognition/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/speech_recognition>`__.
+-  Documentation can be found in the ``reference/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/reference>`__.
+-  Third-party libraries, utilities, and reference material are in the ``third-party/`` `directory <https://github.com/smeeklai/masterThesis/speech_recognition/tree/master/third-party>`__.
 
-To install/reinstall the library locally, run ``python setup.py install`` in the project `root directory <https://github.com/Uberi/speech_recognition>`__.
+To install/reinstall the library locally, run ``python setup.py install`` in the project `root directory <https://github.com/smeeklai/masterThesis/speech_recognition>`__.
 
 Releases are done by running either ``build.sh`` or ``build.bat``. These are bash and batch scripts, respectively, that automatically build Python source packages and `Python Wheels <http://pythonwheels.com/>`__, then upload them to PyPI.
 
@@ -262,11 +262,11 @@ Authors of the original library
     kamushadenes <kamushadenes@hyadesinc.com> (Kamus Hadenes)
     sbraden <braden.sarah@gmail.com> (Sarah Braden)
 
-Please report bugs and suggestions at the `issue tracker <https://github.com/Uberi/speech_recognition/issues>`__!
+Please report bugs and suggestions at the `issue tracker <https://github.com/smeeklai/masterThesis/speech_recognition/issues>`__!
 
 How to cite this library (APA style):
 
-    Zhang, A. (2016). Speech Recognition (Version 3.4) [Software]. Available from https://github.com/Uberi/speech_recognition#readme.
+    Zhang, A. (2016). Speech Recognition (Version 3.4) [Software]. Available from https://github.com/smeeklai/masterThesis/speech_recognition#readme.
 
 How to cite this library (Chicago style):
 
@@ -277,9 +277,9 @@ Also check out the `Python Baidu Yuyin API <https://github.com/DelightRun/PyBaid
 License
 -------
 
-Copyright 2014-2016 `Anthony Zhang (Uberi) <https://uberi.github.io>`__. The source code for this library is available online at `GitHub <https://github.com/Uberi/speech_recognition>`__.
+Copyright 2014-2016 `Anthony Zhang (Uberi) <https://uberi.github.io>`__. The source code for this library is available online at `GitHub <https://github.com/smeeklai/masterThesis/speech_recognition>`__.
 
-SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/Uberi/speech_recognition>`__ for more information.
+SpeechRecognition is made available under the 3-clause BSD license. See ``LICENSE.txt`` in the project's `root directory <https://github.com/smeeklai/masterThesis/speech_recognition>`__ for more information.
 
 For convenience, all the official distributions of SpeechRecognition already include a copy of the necessary copyright notices and licenses. In your project, you can simply **say that licensing information for SpeechRecognition can be found within the SpeechRecognition README, and make sure SpeechRecognition is visible to users if they wish to see it**.
 

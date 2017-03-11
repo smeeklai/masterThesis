@@ -51,8 +51,7 @@ Then, easily install the original version of the library using ``pip install Spe
 Otherwise, download the source distribution from `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__, and extract the archive.
 In the folder, run ``python setup.py install``.
 
-Next, using any free FTP software such as `FileZilla <https://filezilla-project.org/>`__ to connect and access files and folders in Raspberry Pi
-After you are able to access Raspberry Pi, replacing original __init__.py file in the original library located in ``usr/local/lib/python[your python version]/dist-package/speech_recognition`` with the modified __init__.py file in speech_recognition folder downloaded from this github
+Next, using any free FTP software such as `FileZilla <https://filezilla-project.org/>`__ to connect and access files and folders in Raspberry Pi. After you are able to access Raspberry Pi, replacing original __init__.py file in the original library located in ``usr/local/lib/python[your python version]/dist-package/speech_recognition`` with the modified __init__.py file in speech_recognition folder downloaded from this github
 
 Congratulation! You've completed installation and free to have a quick try by running ``python script2.py``
 

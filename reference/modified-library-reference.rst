@@ -2,7 +2,7 @@ Modified Speech Recognition Library Reference
 ====================================
 
 **All of new codes and modifications is mainly added to Recognizer() class. The other classes are untouched.**
-Make sure you read all library explanations and references of the original version `here <https://github.com/smeeklai/masterThesis/blob/master/reference/library-reference.rst> `__ first
+Make sure you read all library explanations and references of the original version `here <https://github.com/smeeklai/masterThesis/blob/master/reference/library-reference.rst>`__ first
 
 ``AudioSource()`` **Untouched**
 ----------------
@@ -26,7 +26,7 @@ Make sure you read all library explanations and references of the original versi
 However, instead of listen to a single speech, I customized it to keep listening until the system is existed manually (press ctrl+c).
 The method can automatically define an end of a speech, and then starts listen to the next one while completed audio data of the previous speech is sent to Google for performing speech recognition and get the result back
 
-Additionally, the method also separates the speech every ``duration_t`` to send partial audio data of the separated speech using sub-threads from ``myThread()`` class to Google so that the system can acquire interim results of a speech. More details about concepts and architectures of the system can be found at `thesis document <https://github.com/smeeklai/masterThesis/blob/master/reference/thesis.pdf> `__
+Additionally, the method also separates the speech every ``duration_t`` to send partial audio data of the separated speech using sub-threads from ``myThread()`` class to Google so that the system can acquire interim results of a speech. More details about concepts and architectures of the system can be found at `thesis document <https://github.com/smeeklai/masterThesis/blob/master/reference/thesis.pdf>`__
 
 The ``timeout`` parameter is the maximum number of seconds that it will wait for a phrase to start before giving up and throwing an ``speech_recognition.WaitTimeoutError`` exception. If ``timeout`` is ``None``, it will wait indefinitely.
 
@@ -35,6 +35,7 @@ The ``timeout`` parameter is the maximum number of seconds that it will wait for
 
 Crate a new myThread instance, which uses to handle audio data to do http requests to Google.
 4 parameters are passed to create a myThread instance:
+
 * audio_data (AudioSource instance) **required**
 * key (Google Speech API key) **optional**
 * language (language of the audio_data) **default is English**

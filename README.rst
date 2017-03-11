@@ -1,54 +1,39 @@
-SpeechRecognition
+SpeechRecognition (Modified Version)
 =================
 
-.. image:: https://img.shields.io/pypi/v/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Latest Version
+Modified version of original Python Speech Recognition Library version 3.4.6
+Only for research purposes
 
-.. image:: https://img.shields.io/pypi/status/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Development Status
+Optimized version of the library using the concept of multithreading programming for performing speech recognition in real time using Google Speech Recognition.
 
-.. image:: https://img.shields.io/pypi/pyversions/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: Supported Python Versions
-
-.. image:: https://img.shields.io/pypi/l/SpeechRecognition.svg
-    :target: https://pypi.python.org/pypi/SpeechRecognition/
-    :alt: License
-
-Library for performing speech recognition, with support for several engines and APIs, online and offline.
-
-Speech recognition engine/API support:
+Speech recognition engine/API support by original version of the library:
 
 * `CMU Sphinx <http://cmusphinx.sourceforge.net/wiki/>`__ (works offline)
-* Google Speech Recognition
+* Google Speech Recognition (Modified version is using this speech recognition) (Caution! Newer engine of Google is now replaced in original library version > 3.6.0)
 * `Wit.ai <https://wit.ai/>`__
 * `Microsoft Bing Voice Recognition <https://www.microsoft.com/cognitive-services/en-us/speech-api>`__
-* `api.ai <https://api.ai/>`__
+* `api.ai <https://api.ai/>`__ (Already deprecated in newer library version > 3.5.0)
 * `IBM Speech to Text <http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html>`__
-
-**Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
-
-To quickly try it out, run ``python -m speech_recognition`` after installing.
 
 Project links:
 
--  `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__
--  `Source code <https://github.com/Uberi/speech_recognition>`__
+-  `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__ (Original library)
+-  `Source code <https://github.com/Uberi/speech_recognition>`__ (Source code of original library)
 -  `Issue tracker <https://github.com/Uberi/speech_recognition/issues>`__
 
 Library Reference
 -----------------
 
-The `library reference <https://github.com/Uberi/speech_recognition/blob/master/reference/library-reference.rst>`__ documents every publicly accessible object in the library. This document is also included under ``reference/library-reference.rst``.
+The `library reference <https://github.com/smeeklai/masterThesis/blob/master/reference/library-reference.rst>`__ documents every publicly accessible object in the library. This document is also included under ``reference/library-reference.rst``.
 
-See `Notes on using PocketSphinx <https://github.com/Uberi/speech_recognition/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
+See `modified library reference <https://github.com/Uberi/speech_recognition/blob/master/reference/modified-library-reference.rst>`__ document for every new and modified classes and objects in the library.
+
+See `Notes on using PocketSphinx <https://github.com/smeeklai/masterThesis/blob/master/reference/pocketsphinx.rst>`__ for information about installing languages, compiling PocketSphinx, and building language packs from online resources. This document is also included under ``reference/pocketsphinx.rst``.
 
 Examples
 --------
 
-See the ``examples/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/examples>`__ in the repository root for usage examples:
+See the ``examples/`` `directory <https://github.com/Uberi/speech_recognition/tree/master/examples>`__ in the repository root for usage examples **of original version of the library**:
 
 -  `Recognize speech input from the microphone <https://github.com/Uberi/speech_recognition/blob/master/examples/microphone_recognition.py>`__
 -  `Transcribe an audio file <https://github.com/Uberi/speech_recognition/blob/master/examples/audio_transcribe.py>`__
@@ -60,24 +45,28 @@ See the ``examples/`` `directory <https://github.com/Uberi/speech_recognition/tr
 Installing
 ----------
 
-First, make sure you have all the requirements listed in the "Requirements" section. 
+First, make sure you have all the requirements listed in the "Requirements" section.
 
-The easiest way to install this is using ``pip install SpeechRecognition``.
-
+Then, easily install the original version of the library using ``pip install SpeechRecognition``.
 Otherwise, download the source distribution from `PyPI <https://pypi.python.org/pypi/SpeechRecognition/>`__, and extract the archive.
-
 In the folder, run ``python setup.py install``.
+
+Next, using any free FTP software such as `FileZilla <https://filezilla-project.org/>`__ to connect and access files and folders in Raspberry Pi
+After you are able to access Raspberry Pi, replacing original __init__.py file in the original library located in ``usr/local/lib/python[your python version]/dist-package/speech_recognition`` with the modified __init__.py file in speech_recognition folder downloaded from this github
+
+Congratulation! You've completed installation and free to have a quick try by running ``python script2.py``
 
 Requirements
 ------------
 
 To use all of the functionality of the library, you should have:
 
-* **Python** 2.6, 2.7, or 3.3+ (required)
+* **Python** 2.6 or 2.7 (required)
 * **PyAudio** 0.2.9+ (required only if you need to use microphone input, ``Microphone``)
 * **PocketSphinx** (required only if you need to use the Sphinx recognizer, ``recognizer_instance.recognize_sphinx``)
 * **FLAC encoder** (required only if the system is not x86-based Windows/Linux/OS X)
 
+**Below advices are not important if you do not intend to use them**
 The following requirements are optional, but can improve or extend functionality in some situations:
 
 * On Python 2, and only on Python 2, some functions (like ``recognizer_instance.recognize_bing``) will run slower if you do not have **Monotonic for Python 2** installed.
@@ -88,7 +77,7 @@ The following sections go over the details of each requirement.
 Python
 ~~~~~~
 
-The first software requirement is `Python 2.6, 2.7, or Python 3.3+ <https://www.python.org/download/releases/>`__. This is required to use the library.
+The modified version of the library requirement is `Python 2.6 or 2.7 <https://www.python.org/download/releases/>`__. This is required to use the library.
 
 PyAudio (for microphone users)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,7 +247,7 @@ Releases are done by running either ``build.sh`` or ``build.bat``. These are bas
 
 Features and bugfixes should be tested, at minimum, on Python 2.7 and a recent version of Python 3. It is highly recommended to test new features on Python 2.6, 2.7, 3.3, and the latest version of Python 3.
 
-Authors
+Authors of the original library
 -------
 
 ::

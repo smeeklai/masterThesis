@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-"""Modifed version of Python Speech Recognition Library verison 3.4.6"""
+"""Modifed version of Python Speech Recognition Library verison 3.4.6
+Currently, the modified version are unable to detect smartglasses in the same network
+and automatically connect to them. If you want to connect to smartglasses,
+you must enable smartglasses mode and input the router and smartglasses IP manually
+Also, reverting caption functionality has not implemented yet"""
 
 __author__ = "Boss"
 __version__ = "1.3"
@@ -268,12 +272,12 @@ class Recognizer(AudioSource):
         self.pause_threshold = 0.8 # seconds of non-speaking audio before a phrase is considered complete
         self.phrase_threshold = 0.3 # minimum seconds of speaking audio before we consider the speaking audio a phrase - values below this are ignored (for filtering out clicks and pops)
         self.non_speaking_duration = 0.5 # seconds of non-speaking audio to keep on both sides of the recording
-        self.output_sentence = ""
+        self.output_caption = ""
         # Variable for experimental purpose
         #self.systemStartTime = 0
         #self.wholeResult = []
-        self.finalResultReturned = True
         self.time_of_last_response = 0
+        self.isSmartglassesConnected = False
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.smartglassesIP = "" # IP of smartglasses
         self.smartglassesPort = 5005 # Connection port of smartglasses
@@ -306,30 +310,11 @@ class Recognizer(AudioSource):
             target_energy = energy * self.dynamic_energy_ratio
             self.energy_threshold = self.energy_threshold * damping + target_energy * (1 - damping)
 
-    def replace_output_sentence(self, sentence):
-        self.output_sentence = sentence
-        #print self.output_sentence # Only for testing purpose
+    def get_output_caption(self):
+        return self.output_caption
 
-    def handle_google_result(self, thread_name, responses_lines_from_google, time_of_responses):
-        output_sentence_length = len(self.output_sentence)
-        for response in responses_lines_from_google:
-            if thread_name == "finalThread":
-                self.replace_output_sentence(response)
-                self.time_of_last_response = time_of_responses
-            elif len(response) > output_sentence_length:
-                if response != self.output_sentence:
-                    self.replace_output_sentence(response)
-                    self.time_of_last_response = time_of_responses
-            elif len(response) == output_sentence_length and time_of_responses > self.time_of_last_response:
-                if response != self.output_sentence:
-                    self.replace_output_sentence(response)
-                    self.time_of_last_response = time_of_responses
-
-    def get_output_sentence(self):
-        return self.output_sentence
-
-    def set_output_sentence(self, new_output_sentence):
-        self.output_sentence = new_output_sentence
+    def set_caption(self, new_output_caption):
+        self.output_caption = new_output_caption
 
     # Below method is for experimental purpose
     def addDataToWholeResult(self, caption, startTime, endTime, srUsedTime):
@@ -338,6 +323,10 @@ class Recognizer(AudioSource):
         data['showedAt'] = float(endTime - startTime)
         data['srUsedTime'] = srUsedTime
         self.wholeResult.append(data)
+
+    def sendCaptionToClient (self, caption, clientIp, clientPort, finalResult):
+        self.server_socket.connect((self.routerIP, self.routerPort))
+        self.server_socket.sendto(caption, (clientIp, clientPort))
 
     def listenMo(self, source, timeout = None):
         assert isinstance(source, AudioSource), "Source must be an audio source"
@@ -351,8 +340,11 @@ class Recognizer(AudioSource):
         #bow two lines are for experimental purpose
         # try:
         #     participantName = raw_input("Please enter your name: ")
-        self.smartglassesIP = raw_input("Please enter smartglasses IP")
-        self.routerIp = raw_input("Please enter router IP")
+        if ((raw_input("Enable smartglasses mode? (y/n): ")).strip().lower() == 'y'):
+            self.isSmartglassesConnected = True
+        if (self.isSmartglassesConnected is True):
+            self.smartglassesIP = raw_input("Please enter smartglasses IP")
+            self.routerIp = raw_input("Please enter router IP")
         while True:
             self.finalThreadStarted = False
             start_time = 0
@@ -360,9 +352,10 @@ class Recognizer(AudioSource):
             while True:
                 #print self.energy_threshold # print energy threshold for checking purpose
                 print("Say something!")
-                frames = collections.deque()
-                frames2 = collections.deque()
-                # store audio input until the phrase starts
+                finalThreadFrame = collections.deque() # frame that is used to store bytes of completed audio data for final thread
+                subThreadFrame = collections.deque() # frame that is used to store bytes of partial audio data for sub-threads
+
+                # Start listening to surroundings until the speech starts
                 while True:
                     elapsed_time += seconds_per_buffer
                     if timeout and elapsed_time > timeout: # handle timeout if specified
@@ -370,12 +363,13 @@ class Recognizer(AudioSource):
 
                     buffer = source.stream.read(source.CHUNK)
                     if len(buffer) == 0: break # reached end of the stream
-                    frames.append(buffer)
-                    if len(frames) > non_speaking_buffer_count: # ensure we only keep the needed amount of non-speaking buffers
-                        frames.popleft()
+                    finalThreadFrame.append(buffer)
+                    if len(finalThreadFrame) > non_speaking_buffer_count: # ensure we only keep the needed amount of non-speaking buffers
+                        finalThreadFrame.popleft()
 
                     # detect whether speaking has started on audio input
                     energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
+                    # If started, break out from this loop. If not, keep waiting
                     if energy > self.energy_threshold: break
 
                     # dynamically adjust the energy threshold using assymmetric weighted average
@@ -391,10 +385,10 @@ class Recognizer(AudioSource):
                     if (start_time == 0): start_time = elapsed_time
                     buffer = source.stream.read(source.CHUNK)
                     if len(buffer) == 0: break # reached end of the stream
-                    #Main frame uses to store complated voice data
-                    frames.append(buffer)
-                    #Sub frame uses to store partial voice data (every 1 sec)
-                    frames2.append(buffer)
+                    # Store audio data (bytes) in final thread frame
+                    finalThreadFrame.append(buffer)
+                    # Store audio data (bytes) in sub-thread frame
+                    subThreadFrame.append(buffer)
                     # Below codes are for experimental purpose
                     # if self.systemStartTime == 0:
                     #     self.systemStartTime = timeit.default_timer()
@@ -402,17 +396,17 @@ class Recognizer(AudioSource):
 
                     # check if speaking has stopped for longer than the pause threshold on the audio input
                     energy = audioop.rms(buffer, source.SAMPLE_WIDTH) # energy of the audio signal
-                    if energy > self.energy_threshold:
+                    if energy > self.energy_threshold: # When energy > self.energy_threshold, it means a person has started speaking
                         diff = elapsed_time - start_time
                         # If duration reached, create a sub-thread to handle an uncompleted audio data
                         if diff >= duration_t:
                             start_time = 0 # restart counter
                             diff = 0 # restart checking variable
-                            frame_data = b"".join(list(frames2))
+                            frame_data = b"".join(list(subThreadFrame))
                             partial_audioData = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-                            sub_thread = self.myThread(partial_audioData,None,"en-US",False, self)
+                            sub_thread = self.myThread(partial_audioData,None,"en-US", self)
                             sub_thread.start()
-                            frames2 = collections.deque()
+                            subThreadFrame = collections.deque()
                         pause_count = 0
                     else:
                         pause_count += 1
@@ -423,11 +417,11 @@ class Recognizer(AudioSource):
                 if phrase_count >= phrase_buffer_count:
                     break # phrase is long enough, stop listening
 
-            #Sending a request with complated voice data
-            for i in range(pause_count - non_speaking_buffer_count): frames.pop() # remove extra non-speaking frames at the end
-            frame_data = b"".join(list(frames))
+            # A speech has ended, create final thread to handle completed audio data
+            for i in range(pause_count - non_speaking_buffer_count): finalThreadFrame.pop() # remove extra non-speaking frames at the end
+            frame_data = b"".join(list(finalThreadFrame))
             full_data = AudioData(frame_data, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-            finalThread = self.myThread(full_data,None,"en-US",False, self)
+            finalThread = self.myThread(full_data,None,"en-US", self)
             finalThread.setName("finalThread")
             self.finalThreadStarted = True
             finalThread.start()
@@ -439,19 +433,21 @@ class Recognizer(AudioSource):
             # with io.open(os.path.join('/home/pi/boss/main_files/output',fileName), 'w', encoding='utf-8') as outfile:
             #     outfile.write(unicode(json.dumps(self.wholeResult, ensure_ascii=False)))
 
-    def sendCaptionToClient (self, caption, clientIp, clientPort, finalResult):
-        self.server_socket.connect((self.routerIP, self.routerPort))
-        self.server_socket.sendto(caption, (clientIp, clientPort))
-
+    """This class has created and added to the original library for optimizing the library to work in multithreading"""
     class myThread (threading.Thread):
-        def __init__(self, audio_data, key = None, language = "en-US", show_all = False, parent = None):
+        def __init__(self, audio_data, key = None, language = "en-US", parent = None):
+            # paremeters checking
             assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
             assert key is None or isinstance(key, str), "`key` must be `None` or a string"
             assert isinstance(language, str), "`language` must be a string"
-            threading.Thread.__init__(self)
-            self.parent = parent
+
+            threading.Thread.__init__(self) # calling __init__ of super class to inititate a thread
+            # Prepare Google API end points and headers for doing http requests
             self.upstream_url = "https://www.google.com/speech-api/full-duplex/v1/up?key=%(key)s&pair=%(pair)s&lang=en-US&client=chromium&continuous=true&interim=true&pFilter=0"
             self.downstream_url = "https://www.google.com/speech-api/full-duplex/v1/down?pair=%(pair)s"
+            self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(self.sample_rate)}
+            self.parent = parent # an instance of Recognizer(), using for invoking Recognizer() methods
+            # Developers can define their own api_key from Google speech api if they have one. Otherwise uses the default key
             if key is None:
                 self.api_key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
             else:
@@ -464,26 +460,49 @@ class Recognizer(AudioSource):
             self.flac_data = self.audio_data.get_flac_data()
             self.sample_rate = self.audio_data.sample_rate
             self.language = language
-            self.show_all = show_all
-            self.upstream_headers = {"Content-Type": "audio/x-flac; rate={0}".format(self.sample_rate)}
 
+        # Derived method from threading.Thread. After a thread is inititated, this method will be called immediately
         def run(self):
             # Below codes are for experimental purpose
             # if self.name == "finalThread":
             #     self.finalThreadStartTime = timeit.default_timer()
-            self.startStreamDataToGoogle()
+            self.streamDataToGoogle()
 
+        # Create threads and start making upstream and downstream requests to Google
+        def streamDataToGoogle(self):
+            # Finish up the urls to call Google Speech API
+            pair = self.getPair() # A random string that is used to match downstream request with upstream request in order to receive correct outputs
+            upstream_url = self.upstream_url % {"pair": pair, "key": self.api_key}
+            downstream_url = self.downstream_url % {"pair": pair, "key": self.api_key}
+            # Start doing http requests to Google both upstream and downstream
+            self.upsession = requests.Session()
+            self.downsession = requests.Session()
+            self.upstream_thread = Thread(target=self.upstream, args=(upstream_url,))
+            self.downstream_thread = Thread(target=self.downstream, args=(downstream_url,))
+            self.downstream_thread.start()
+            self.upstream_thread.start()
+            self.stop()
+
+        # Kill the threads
+        def stop(self):
+            self.downstream_thread.join()
+            self.upstream_thread.join()
+
+        # Generate a random pair value to use in upstream_url and downstream_url
         def getPair(self):
             return hex(random.getrandbits(64))[2:-1]
 
+        # This method is used to upload the audio data while performing upstream http request
         def gen_data(self):
             counter = 0;
             while True:
                 item = self.flac_data
+                # Separate the entire audio data into multiple chucks of 8192 bytes [It's mandatory to do this to send big data through HTTP request]
                 info = [item[i:i+8192] for i in range(0, len(item), 8192)]
                 if counter < len(info):
                     yield info[counter]
                 else:
+                    # Send dummy data to Google for another 2 seconds before close up the stream
                     if self.no_result or self.timeSinceResponse > 2:
                         return #Google is Done Responding, close UpStream
                     time.sleep(.5)
@@ -491,6 +510,7 @@ class Recognizer(AudioSource):
                     yield "00000000"
                 counter += 1
 
+        # This method is used to check whether the current line of responses is the final response or not
         def final(self):
             try:
               response = json.loads(self.response)
@@ -502,25 +522,30 @@ class Recognizer(AudioSource):
               return False
             return False
 
+        # A callback function for performing upstream request to Google
         def upstream(self, url):
             result = self.upsession.post(url, headers=self.upstream_headers, data=self.gen_data())
             upstream_request_status = result.status_code
             upstream_request_content = result.content
             if result.status_code != 200:
                 print ("failed request, status code %d, info: %s" % (upstream_request_status,result.content))
-                # self.startStreamDataToGoogle() # Enable this if you want reattempt
+                # self.streamDataToGoogle() # Enable this if you want reattempt
                 raise RuntimeException("upstream request exception")
 
+        # A callback function for performing downstream request to Google
         def downstream(self, url):
             r = self.downsession.get(url, stream=True)
             self.status_code = r.status_code
+            # Check status of the request, if it's not successful then try making http requests again
             if r.status_code == 200:
+                # Read each lines in response
                 for line in r.iter_lines():
+                    # If a final thread of a speech has created, no more needs to update a caption from sub-thread transcripts
                     if not self.parent.finalThreadStarted or self.name == "finalThread":
                         self.timeSinceResponse = 0
                         self.response = line
+
                         if line == '{"result":[]}':
-                            # print "Connection successful" # for console checking purpose
                             # Google sends back an empty result signifying a successful connection
                             if not self.connectionSuccessful:
                                 self.connectionSuccessful = True
@@ -529,54 +554,47 @@ class Recognizer(AudioSource):
                                 print ("No Recongnizable Dialogue, closing stream")
                                 self.no_result = True
                         if self.final():
+                            # When final result of final thread has found, replace and finalize the caption.
                             if self.name == "finalThread":
-                                t = json.loads(line)
-                                transcript = t['result'][0]['alternative'][0]['transcript']
-                                self.parent.set_output_sentence(transcript)
-                                self.parent.sendCaptionToClient(self.parent.get_output_sentence(), self.parent.smartglassesIP, self.parent.smartglassesPort, True)
-                                print "Final result: " + self.parent.get_output_sentence()
-                                self.parent.set_output_sentence("")
+                                response = json.loads(line)
+                                # Extract the output string from the json response
+                                transcript = response['result'][0]['alternative'][0]['transcript']
+                                self.parent.set_caption(transcript)
+                                if (self.isSmartglassesConnected is True):
+                                    self.parent.sendCaptionToClient(self.parent.get_output_caption(), self.parent.smartglassesIP, self.parent.smartglassesPort, True)
+                                print "Final result: " + self.parent.get_output_caption() # Output to console, for debugging purpose
+                                self.parent.set_caption("") # Reset caption
                                 # Below code is for experimental purpose
                                 # finalThreadEndTime = timeit.default_timer()
-                                #self.parent.addDataToWholeResult(self.parent.get_output_sentence(), self.parent.systemStartTime,
+                                #self.parent.addDataToWholeResult(self.parent.get_output_caption(), self.parent.systemStartTime,
                                 # finalThreadEndTime, float(finalThreadEndTime - self.finalThreadStartTime))
                             self.response = ""
                         else:
+                            # Updating caption from interim results of threads
                             response = json.loads(line)
                             transcript = ""
+                            # Extract the output strings from json response.
+                            # They could exsist in two different places in json respone so we first try one place, if they're not there then find the other place
                             try:
                                 if len(response['result']) != 0 :
                                     transcript = response['result'][0]['alternative'][0]['transcript']
                             except:
                                 transcript = response['result']
                             finally:
-                                if len(transcript) > len(self.parent.get_output_sentence()):
-                                    self.parent.set_output_sentence(transcript)
-                                    self.parent.sendCaptionToClient(self.parent.get_output_sentence(), self.parent.smartglassesIP, self.parent.smartglassesPort, False)
-                                    print self.name + ": " + self.parent.get_output_sentence() # for console checking purpose
+                                # transcript found, update a caption with the transcript and/or send it to smartglasses
+                                if len(transcript) > len(self.parent.get_output_caption()):
+                                    self.parent.set_caption(transcript)
+                                    if (self.isSmartglassesConnected is True):
+                                        self.parent.sendCaptionToClient(self.parent.get_output_caption(), self.parent.smartglassesIP, self.parent.smartglassesPort, False)
+                                    print self.name + ": " + self.parent.get_output_caption() # for console debugging purpose
                     else:
                         break;
             else:
+                # Retry making downstream request again when they're failed to connect
                 print ("Failed to connect downstream. Response is: %s \n %s" %(r.status_code, r.content))
                 if self.name == "finalThread":
                     print ("Restarting Attempt")
-                    self.startStreamDataToGoogle()
-
-        def stop(self):
-            self.downstream_thread.join()
-            self.upstream_thread.join()
-
-        def startStreamDataToGoogle(self):
-                pair = self.getPair()
-                upstream_url = self.upstream_url % {"pair": pair, "key": self.api_key}
-                downstream_url = self.downstream_url % {"pair": pair, "key": self.api_key}
-                self.upsession = requests.Session()
-                self.downsession = requests.Session()
-                self.upstream_thread = Thread(target=self.upstream, args=(upstream_url,))
-                self.downstream_thread = Thread(target=self.downstream, args=(downstream_url,))
-                self.downstream_thread.start()
-                self.upstream_thread.start()
-                self.stop()
+                    self.streamDataToGoogle()
 
     def record(self, source, duration = None, offset = None):
         """

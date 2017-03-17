@@ -167,9 +167,10 @@ This is possible if your Raspberry Pi has WiFi chip built in or connect to the U
 
 In this case, you need to configure the network interface files inside the Raspberry Pi. Follow these steps carefully:
 
-1) Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/network/interfaces``
+- Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/network/interfaces``
 
-2) Modify or add these lines if they're not there
+- Modify or add these lines if they're not there
+
 ::
 
     allow-hotplug wlan0
@@ -178,9 +179,10 @@ In this case, you need to configure the network interface files inside the Raspb
     iface default inet dhcp
 
 
-3) Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/wpa_supplicant/wpa_supplicant.conf``
+- Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/wpa_supplicant/wpa_supplicant.conf``
 
-4) Modify or add these lines if they're not there
+- Modify or add these lines if they're not there
+
 ::
 
     network={
@@ -190,11 +192,11 @@ In this case, you need to configure the network interface files inside the Raspb
     }
 
 
-5) After finished editing, save it
+- After finished editing, save it
 
-6) Restart the Raspberry Pi
+- Restart the Raspberry Pi
 
-7) Run command ``ifconfig`` to see the IP of the wireless adapter.
+- Run command ``ifconfig`` to see the IP of the wireless adapter.
 
 Troubleshooting
 ---------------

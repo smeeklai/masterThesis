@@ -151,14 +151,42 @@ To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install mo
 Executing
 ----------
 
-1) First of all, setting up a wireless network. If you already have your network set up, for example, your home WiFi or lab WiFi. You can just skip this step
+1) First of all, setting up a wireless network. If you already have your network set up, for example, your home WiFi or lab WiFi, you can just skip this step
 2) Connect the Raspberry Pi to the network via LAN cable
 3) If you also want to use smartglasses, connect the smartglasses to the network as well. If not, skip this step
 4) Find a way for yourself to know the Raspberry Pi IP address
 5) Access to Raspberry Pi by doing SSH. **Make sure your laptop/PC is in the same network with Raspberry Pi**
-6) Access to `boss\main_files` folder and run `python script2.py`
+6) Access to ``boss\main_files`` folder and run ``python script2.py``
 
 **Note that** if you also want to show outputs on smartglasses, after running the script, enable the smartglasses mode. However, in order to run this mode without errors, you must know the IP addresses of your smartglasses and your router.
+
+Wirelessly connect Raspberry Pi to the network
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is possible if your Raspberry Pi has WiFi chip built in or connect to the USB WiFi Adapter.
+
+In this case, you need to configure the network interface files inside the Raspberry Pi. Follow these steps carefully:
+
+1) Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/network/interfaces``
+2) Modify or add these lines if they're not there
+::
+
+    allow-hotplug wlan0
+    iface wlan0 inet manual
+      wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+    iface default inet dhcp
+3) Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/wpa_supplicant/wpa_supplicant.conf``
+4) Modify or add these lines if they're not there
+::
+
+    network={
+        ssid="YOUR_NETWORK_NAME"
+        psk="YOUR_NETWORK_PASSWORD"
+        key_mgmt=WPA-PSK (or something else according to your network setting)
+    }
+5) After finished editing, save it
+6) Restart the Raspberry Pi
+7) Run command ``ifconfig`` to see the IP of the wireless adapter.
 
 Troubleshooting
 ---------------

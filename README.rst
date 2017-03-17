@@ -148,6 +148,18 @@ This is because monotonic time is necessary to handle cache expiry properly in t
 
 To install, use `Pip <https://pip.readthedocs.org/>`__: execute ``pip install monotonic`` in a terminal.
 
+Executing
+----------
+
+1) First of all, setting up a wireless network. If you already have your network set up, for example, your home WiFi or lab WiFi. You can just skip this step
+2) Connect the Raspberry Pi to the network via LAN cable
+3) If you also want to use smartglasses, connect the smartglasses to the network as well. If not, skip this step
+4) Find a way for yourself to know the Raspberry Pi IP address
+5) Access to Raspberry Pi by doing SSH. **Make sure your laptop/PC is in the same network with Raspberry Pi**
+6) Access to `boss\main_files` folder and run `python script2.py`
+
+**Note that** if you also want to show outputs on smartglasses, after running the script, enable the smartglasses mode. However, in order to run this mode without errors, you must know the IP addresses of your smartglasses and your router.
+
 Troubleshooting
 ---------------
 

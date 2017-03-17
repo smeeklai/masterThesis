@@ -279,9 +279,9 @@ class Recognizer(AudioSource):
         self.time_of_last_response = 0
         self.isSmartglassesConnected = False
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.smartglassesIP = "" # IP of smartglasses
+        self.smartglassesIP = "192.168.1.36" # IP of smartglasses
         self.smartglassesPort = 5005 # Connection port of smartglasses
-        self.routerIp = ""
+        self.routerIP = ""
         self.routerPort = 80
 
     def adjust_for_ambient_noise(self, source, duration = 1):
@@ -324,7 +324,7 @@ class Recognizer(AudioSource):
         data['srUsedTime'] = srUsedTime
         self.wholeResult.append(data)
 
-    def sendCaptionToClient (self, caption, clientIp, clientPort, finalResult):
+    def sendCaptionToClient (self, caption, clientIp, clientPort):
         self.server_socket.connect((self.routerIP, self.routerPort))
         self.server_socket.sendto(caption, (clientIp, clientPort))
 
@@ -343,8 +343,8 @@ class Recognizer(AudioSource):
         if ((raw_input("Enable smartglasses mode? (y/n): ")).strip().lower() == 'y'):
             self.isSmartglassesConnected = True
         if (self.isSmartglassesConnected is True):
-            self.smartglassesIP = raw_input("Please enter smartglasses IP")
-            self.routerIp = raw_input("Please enter router IP")
+            self.smartglassesIP = raw_input("Please enter smartglasses IP: ")
+            self.routerIP = raw_input("Please enter router IP: ")
         while True:
             self.finalThreadStarted = False
             start_time = 0
@@ -440,8 +440,17 @@ class Recognizer(AudioSource):
             assert isinstance(audio_data, AudioData), "`audio_data` must be audio data"
             assert key is None or isinstance(key, str), "`key` must be `None` or a string"
             assert isinstance(language, str), "`language` must be a string"
-
             threading.Thread.__init__(self) # calling __init__ of super class to inititate a thread
+
+            # Variable declaration
+            self.timeSinceResponse = 0
+            self.response = ""
+            self.connectionSuccessful = False
+            self.no_result = False
+            self.audio_data = audio_data
+            self.flac_data = self.audio_data.get_flac_data()
+            self.sample_rate = self.audio_data.sample_rate
+            self.language = language
             # Prepare Google API end points and headers for doing http requests
             self.upstream_url = "https://www.google.com/speech-api/full-duplex/v1/up?key=%(key)s&pair=%(pair)s&lang=en-US&client=chromium&continuous=true&interim=true&pFilter=0"
             self.downstream_url = "https://www.google.com/speech-api/full-duplex/v1/down?pair=%(pair)s"
@@ -452,14 +461,6 @@ class Recognizer(AudioSource):
                 self.api_key = "AIzaSyBOti4mM-6x9WDnZIjIeyEU21OpBXqWBgw"
             else:
                 self.api_key = key
-            self.timeSinceResponse = 0
-            self.response = ""
-            self.connectionSuccessful = False
-            self.no_result = False
-            self.audio_data = audio_data
-            self.flac_data = self.audio_data.get_flac_data()
-            self.sample_rate = self.audio_data.sample_rate
-            self.language = language
 
         # Derived method from threading.Thread. After a thread is inititated, this method will be called immediately
         def run(self):
@@ -560,8 +561,8 @@ class Recognizer(AudioSource):
                                 # Extract the output string from the json response
                                 transcript = response['result'][0]['alternative'][0]['transcript']
                                 self.parent.set_caption(transcript)
-                                if (self.isSmartglassesConnected is True):
-                                    self.parent.sendCaptionToClient(self.parent.get_output_caption(), self.parent.smartglassesIP, self.parent.smartglassesPort, True)
+                                if (self.parent.isSmartglassesConnected is True):
+                                    self.parent.sendCaptionToClient(self.parent.get_output_caption(), self.parent.smartglassesIP, self.parent.smartglassesPort)
                                 print "Final result: " + self.parent.get_output_caption() # Output to console, for debugging purpose
                                 self.parent.set_caption("") # Reset caption
                                 # Below code is for experimental purpose
@@ -584,8 +585,8 @@ class Recognizer(AudioSource):
                                 # transcript found, update a caption with the transcript and/or send it to smartglasses
                                 if len(transcript) > len(self.parent.get_output_caption()):
                                     self.parent.set_caption(transcript)
-                                    if (self.isSmartglassesConnected is True):
-                                        self.parent.sendCaptionToClient(self.parent.get_output_caption(), self.parent.smartglassesIP, self.parent.smartglassesPort, False)
+                                    if (self.parent.isSmartglassesConnected is True):
+                                        self.parent.sendCaptionToClient(self.parent.get_output_caption(), self.parent.smartglassesIP, self.parent.smartglassesPort)
                                     print self.name + ": " + self.parent.get_output_caption() # for console debugging purpose
                     else:
                         break;

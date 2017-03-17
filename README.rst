@@ -168,21 +168,15 @@ This is possible if your Raspberry Pi has WiFi chip built in or connect to the U
 In this case, you need to configure the network interface files inside the Raspberry Pi. Follow these steps carefully:
 
 - Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/network/interfaces``
-
 - Modify or add these lines if they're not there
-
 ::
 
     allow-hotplug wlan0
     iface wlan0 inet manual
       wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
     iface default inet dhcp
-
-
 - Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/wpa_supplicant/wpa_supplicant.conf``
-
 - Modify or add these lines if they're not there
-
 ::
 
     network={
@@ -191,11 +185,8 @@ In this case, you need to configure the network interface files inside the Raspb
         key_mgmt=WPA-PSK (or something else according to your network setting)
     }
 
-
 - After finished editing, save it
-
 - Restart the Raspberry Pi
-
 - Run command ``ifconfig`` to see the IP of the wireless adapter.
 
 Troubleshooting

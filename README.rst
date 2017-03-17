@@ -177,6 +177,7 @@ In this case, you need to configure the network interface files inside the Raspb
       wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
     iface default inet dhcp
 
+
 3) Open up the wpa_supplicant.conf file in the editor. ``sudo nano /etc/wpa_supplicant/wpa_supplicant.conf``
 
 4) Modify or add these lines if they're not there
@@ -187,6 +188,7 @@ In this case, you need to configure the network interface files inside the Raspb
         psk="YOUR_NETWORK_PASSWORD"
         key_mgmt=WPA-PSK (or something else according to your network setting)
     }
+
 
 5) After finished editing, save it
 
